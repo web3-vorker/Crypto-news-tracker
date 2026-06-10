@@ -1,0 +1,10 @@
+.specstory
+.venv
+.vscode
+.env
+for_gpt_builder.py
+for_gpt.py
+news.db
+__pycache__
+__init__.py
+parsing.py

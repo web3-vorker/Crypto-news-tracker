@@ -1,0 +1,99 @@
+import aiohttp
+import feedparser
+from bs4 import BeautifulSoup
+from app.collectors.base import BaseCollector
+
+from utils.logger import logger
+
+
+NITTER_INSTANCES = [
+    "https://rss.xcancel.com",
+    "https://nitter.net",
+    "https://nitter.catsarch.com",
+    "https://nitter.tiekoetter.com",
+    "https://nitter.kareem.one",
+    "https://nitter.42l.fr",
+    "https://nitter.space",
+    "https://lightbrd.com",
+    "https://nitter.privacyredirect.com",
+    "https://nuku.trabun.org",
+    "https://nitter.privacyredirect.com",
+    "https://nitter.net",
+    "https://nitter.poast.org",
+]
+
+ACCOUNTS = [
+    "Reuters",
+    "AP",
+    "BBCBreaking",
+    "AJEnglish",
+    "FedReserve",
+    "@SecScottBessent",
+    "WSJmarkets",
+    "markets",
+    "OSINTdefender",
+    "WarMonitor3",
+    "LizAnnSonders",
+    "RaoulGMI",
+    "zerohedge",
+    "realDonaldTrump",
+    "POTUS",
+]
+
+
+class TwitterCollector(BaseCollector):
+    
+    async def fetch_rss(self, session, account):
+      for instance in NITTER_INSTANCES:
+        try:
+            url = f"{instance}/{account}/rss"
+            async with session.get(url, timeout=8, allow_redirects=True) as response:
+                if response.status == 200:
+                    return await response.text()
+        except Exception:
+            continue
+      return None 
+    
+
+    async def fetch(self):
+        news = []
+
+        headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        async with aiohttp.ClientSession(headers=headers) as session:
+            for account in ACCOUNTS:
+                try:
+                    rss_text = await self.fetch_rss(session, account)
+
+                    if not rss_text:
+                        logger.error(f"[TwitterCollector] все инстансы недоступны для @{account}")
+                        continue
+
+                    feed = feedparser.parse(rss_text)
+
+                    for entry in feed.entries[:5]:
+                        title = entry.title[:150]
+                        
+                        # пропускаем ретвиты
+                        if title.startswith("RT by ") or title.startswith("R to "):
+                            continue
+                        
+                        text = BeautifulSoup(
+                            entry.get("summary", ""),
+                            "html.parser"
+                        ).get_text()
+
+                        news.append({
+                            "source": f"Twitter/@{account}",
+                            "title": entry.title[:150],
+                            "text": text,
+                            "url": entry.link,
+                        })
+
+                except Exception as e:
+                    logger.error(f"[TwitterCollector] @{account}: {e}")
+                    continue
+
+        return news
