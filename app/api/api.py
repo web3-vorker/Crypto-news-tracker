@@ -79,7 +79,7 @@ COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
 COINS = ["bitcoin", "ethereum", "dogecoin"]
 
 _price_cache: dict = {"data": None, "ts": 0}
-CACHE_TTL_SECONDS = 60
+CACHE_TTL_SECONDS = 180
 
 
 @app.get("/prices")
@@ -97,10 +97,31 @@ async def get_prices() -> list[dict]:
         "price_change_percentage": "24h",
     }
 
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; CryptoNewsTracker/1.0)",
+    }
+
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(COINGECKO_URL, params=params, timeout=10) as response:
-                data = await response.json()
+            async with session.get(
+                COINGECKO_URL, params=params, headers=headers, timeout=10
+            ) as response:
+                raw_text = await response.text()
+
+                if response.status != 200:
+                    logger.error(
+                        f"get_prices: CoinGecko returned {response.status}: {raw_text[:300]}"
+                    )
+                    raise ValueError(f"CoinGecko status {response.status}")
+
+                data = await response.json(content_type=None)
+
+        # CoinGecko при rate-limit/ошибке отдаёт dict вместо list — проверяем явно,
+        # чтобы не падать с непонятной 'string indices must be integers'
+        if not isinstance(data, list):
+            logger.error(f"get_prices: unexpected response shape: {str(data)[:300]}")
+            raise ValueError("Unexpected CoinGecko response shape (not a list)")
 
         result = [
             {

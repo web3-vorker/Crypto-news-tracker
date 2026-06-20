@@ -174,10 +174,10 @@ async def main():
 
         # Парсим результаты AI, отправляем в Telegram только сильные новости и сохраняем в отдельную таблицу StrongNews
         for result in results:
-            if result["is_important"] and result["score"] > 50:
+            if result["is_important"] and result["score"] > 70:
                 logger.info(f"[STRONG NEWS] {result['title']} - {result['reason']}")
 
-                # await send_news(ai_result=result)
+                await send_news(ai_result=result)
 
                 # Сохраняем в таблицу StrongNews
                 await add_strong_news(
