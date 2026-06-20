@@ -5,13 +5,15 @@ databases:
     user: crypto_news
 
 services:
-  # Сборщик новостей — постоянно работающий процесс (main.py с while True)
-  - type: worker
+  # Сборщик новостей — на Free плане Render не даёт Background Worker,
+  # поэтому запускаем как обычный Web Service с health-check эндпоинтом,
+  # а сам while-True цикл крутится в фоне внутри процесса.
+  - type: web
     name: crypto-news-worker
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m app.main
+    startCommand: python -m app.worker_service
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -23,7 +25,7 @@ services:
         sync: false
       - key: ALLOWED_USERS
         sync: false
-
+        
   # API — отдаёт новости и цены для дашборда
   - type: web
     name: crypto-news-api
