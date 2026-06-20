@@ -10,6 +10,7 @@ from app.collectors.sec import SECCollector
 from app.collectors.twitter import TwitterCollector
 
 from app.db.database import (
+  add_strong_news,
   engine, 
   get_news,
   add_news,
@@ -171,12 +172,24 @@ async def main():
             logger.info(f"[AI RESULTS] {results}")
 
 
-        # Парсим результаты AI и отправляем в Telegram только сильные новости
+        # Парсим результаты AI, отправляем в Telegram только сильные новости и сохраняем в отдельную таблицу StrongNews
         for result in results:
-            if result["is_important"] and result["score"] > 70:
+            if result["is_important"] and result["score"] > 50:
                 logger.info(f"[STRONG NEWS] {result['title']} - {result['reason']}")
 
-                await send_news(ai_result=result)
+                # await send_news(ai_result=result)
+
+                # Сохраняем в таблицу StrongNews
+                await add_strong_news(
+                    title=result["title"],
+                    abridged_text=result["abridged_text"],
+                    sentiment=result["sentiment"],
+                    score=result["score"],
+                    reason=result["reason"],
+                    category=result["category"],
+                    source=result["source"],
+                    url=result["url"]
+                )
 
                     # TODO:
                     # ✅ Dedup

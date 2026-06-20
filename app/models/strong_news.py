@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, DateTime, func
+from sqlalchemy import String, Integer, DateTime, func
 
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -8,9 +8,9 @@ from sqlalchemy.orm import mapped_column
 from app.models.base import Base
 
 
-class News(Base):
+class StrongNews(Base):
 
-    __tablename__ = "news"
+    __tablename__ = "strong_news"
 
     id: Mapped[int] = mapped_column(
         primary_key=True
@@ -21,7 +21,23 @@ class News(Base):
         unique=True,
     )
 
-    text: Mapped[str] = mapped_column(
+    abridged_text: Mapped[str] = mapped_column(
+        String,
+    )
+
+    sentiment: Mapped[str] = mapped_column(
+        String,
+    )
+
+    score: Mapped[int] = mapped_column(
+        Integer,
+    )
+
+    reason: Mapped[str] = mapped_column(
+        String,
+    )
+
+    category: Mapped[str] = mapped_column(
         String,
     )
 
