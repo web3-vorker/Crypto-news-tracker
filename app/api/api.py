@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 
@@ -71,15 +72,86 @@ async def get_news(
 
 
 # ---------------------------------------------------------------------------
-# Цены крипты (CoinGecko) с простым in-memory кэшем, чтобы не упираться
-# в рейт-лимиты публичного API при частом опросе дашбордом.
+# Цены крипты (Binance Public API) с простым in-memory кэшем.
+# Binance даёт лимит 1200 запросов/мин на IP — это на порядок выше CoinGecko,
+# поэтому проблем с рейт-лимитом на шаренных IP (как у Render) практически нет.
 # ---------------------------------------------------------------------------
 
-COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
-COINS = ["bitcoin", "ethereum", "dogecoin"]
+BINANCE_TICKER_URL = "https://api.binance.com/api/v3/ticker/24hr"
+BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines"
+
+# symbol на Binance -> (отображаемый symbol, name, coingecko-like id)
+COINS = {
+    "BTCUSDT": {"symbol": "BTC", "name": "Bitcoin"},
+    "ETHUSDT": {"symbol": "ETH", "name": "Ethereum"},
+    "DOGEUSDT": {"symbol": "DOGE", "name": "Dogecoin"},
+}
 
 _price_cache: dict = {"data": None, "ts": 0}
-CACHE_TTL_SECONDS = 180
+CACHE_TTL_SECONDS = 60  # Binance не лимитирует так жёстко, можно обновлять чаще
+
+
+async def _fetch_sparkline(session: aiohttp.ClientSession, pair: str) -> list[float]:
+    # часовые свечи за последние 7 дней = 168 точек, как у CoinGecko sparkline_in_7d
+    params = {"symbol": pair, "interval": "1h", "limit": 168}
+
+    try:
+        async with session.get(BINANCE_KLINES_URL, params=params, timeout=10) as response:
+            if response.status != 200:
+                return []
+            klines = await response.json()
+            # каждая свеча: [open_time, open, high, low, close, volume, ...]
+            return [float(k[4]) for k in klines]
+    except Exception as e:
+        logger.debug(f"sparkline fetch failed for {pair}: {e}")
+        return []
+
+
+async def _fetch_prices_from_binance() -> list[dict]:
+    headers = {"Accept": "application/json"}
+
+    async with aiohttp.ClientSession(headers=headers) as session:
+        params = {"symbols": str(list(COINS.keys())).replace("'", '"')}
+
+        async with session.get(BINANCE_TICKER_URL, params=params, timeout=10) as response:
+            raw_text = await response.text()
+
+            if response.status != 200:
+                logger.error(f"get_prices: Binance returned {response.status}: {raw_text[:300]}")
+                raise ValueError(f"Binance status {response.status}")
+
+            data = await response.json(content_type=None)
+
+        if not isinstance(data, list):
+            logger.error(f"get_prices: unexpected response shape: {str(data)[:300]}")
+            raise ValueError("Unexpected Binance response shape (not a list)")
+
+        # спарклайны тянем параллельно, чтобы не ждать по очереди
+        sparkline_tasks = [_fetch_sparkline(session, pair) for pair in COINS.keys()]
+        sparklines = await asyncio.gather(*sparkline_tasks)
+        sparkline_by_pair = dict(zip(COINS.keys(), sparklines))
+
+        result = []
+        for ticker in data:
+            pair = ticker["symbol"]
+            meta = COINS.get(pair)
+            if not meta:
+                continue
+
+            result.append({
+                "id": meta["symbol"].lower(),
+                "symbol": meta["symbol"],
+                "name": meta["name"],
+                "price": float(ticker["lastPrice"]),
+                "change_24h": float(ticker["priceChangePercent"]),
+                "sparkline": sparkline_by_pair.get(pair, []),
+            })
+
+        # сохраняем порядок BTC -> ETH -> DOGE
+        order = list(COINS.keys())
+        result.sort(key=lambda c: order.index(f"{c['symbol']}USDT"))
+
+        return result
 
 
 @app.get("/prices")
@@ -89,51 +161,8 @@ async def get_prices() -> list[dict]:
     if _price_cache["data"] is not None and (now - _price_cache["ts"]) < CACHE_TTL_SECONDS:
         return _price_cache["data"]
 
-    params = {
-        "vs_currency": "usd",
-        "ids": ",".join(COINS),
-        "order": "market_cap_desc",
-        "sparkline": "true",
-        "price_change_percentage": "24h",
-    }
-
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; CryptoNewsTracker/1.0)",
-    }
-
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                COINGECKO_URL, params=params, headers=headers, timeout=10
-            ) as response:
-                raw_text = await response.text()
-
-                if response.status != 200:
-                    logger.error(
-                        f"get_prices: CoinGecko returned {response.status}: {raw_text[:300]}"
-                    )
-                    raise ValueError(f"CoinGecko status {response.status}")
-
-                data = await response.json(content_type=None)
-
-        # CoinGecko при rate-limit/ошибке отдаёт dict вместо list — проверяем явно,
-        # чтобы не падать с непонятной 'string indices must be integers'
-        if not isinstance(data, list):
-            logger.error(f"get_prices: unexpected response shape: {str(data)[:300]}")
-            raise ValueError("Unexpected CoinGecko response shape (not a list)")
-
-        result = [
-            {
-                "id": coin["id"],
-                "symbol": coin["symbol"].upper(),
-                "name": coin["name"],
-                "price": coin["current_price"],
-                "change_24h": coin.get("price_change_percentage_24h"),
-                "sparkline": coin.get("sparkline_in_7d", {}).get("price", []),
-            }
-            for coin in data
-        ]
+        result = await _fetch_prices_from_binance()
 
         _price_cache["data"] = result
         _price_cache["ts"] = now
@@ -144,7 +173,7 @@ async def get_prices() -> list[dict]:
         logger.error(f"get_prices error: {e}")
 
         # При ошибке отдаём последний валидный кэш, если он есть, чтобы
-        # дашборд не падал в пустоту на временных сбоях CoinGecko.
+        # дашборд не падал в пустоту на временных сбоях Binance.
         if _price_cache["data"] is not None:
             return _price_cache["data"]
 
