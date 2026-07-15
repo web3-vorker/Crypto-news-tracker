@@ -44,15 +44,15 @@ ACCOUNTS = [
 class TwitterCollector(BaseCollector):
     
     async def fetch_rss(self, session, account):
-      for instance in NITTER_INSTANCES:
-        try:
-            url = f"{instance}/{account}/rss"
-            async with session.get(url, timeout=8, allow_redirects=True) as response:
-                if response.status == 200:
-                    return await response.text()
-        except Exception:
-            continue
-      return None 
+        for instance in NITTER_INSTANCES:
+            try:
+                url = f"{instance}/{account}/rss"
+                async with session.get(url, timeout=8, allow_redirects=True) as response:
+                    if response.status == 200:
+                        return await response.text()
+            except Exception:
+                continue
+        return None 
     
 
     async def fetch(self):

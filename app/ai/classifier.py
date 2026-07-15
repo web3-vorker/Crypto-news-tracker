@@ -9,12 +9,17 @@ load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
+models_str = os.getenv("OPENROUTER_MODELS", "")
+OPENROUTER_MODELS = [model.strip() for model in models_str.split(",") if model.strip()]
+
 class AI:
   def __init__(self,):
     self.client = AsyncOpenAI(
       base_url="https://openrouter.ai/api/v1",
       api_key=OPENROUTER_API_KEY,
     )
+    self.models = OPENROUTER_MODELS
+    
 
   async def classify(self, batch: list[dict]) -> list[dict]:
     prompt_template = """
@@ -108,34 +113,37 @@ class AI:
       """
     
     prompt = prompt_template.replace("NEWS_BATCH", json.dumps(batch, ensure_ascii=False, indent=2))
-    
-    try: 
-      response = await self.client.chat.completions.create(
-        model="openai/gpt-oss-120b:free",
-        messages=[
-          {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-      )
-      content = response.choices[0].message.content
 
-      if not content:
-          return []
+    for model in self.models:
+      try: 
+        response = await self.client.chat.completions.create(
+          model=model,
+          messages=[
+            {"role": "user", "content": prompt}
+          ],
+          temperature=0.3
+        )
+        content = response.choices[0].message.content
 
-      try:
-          content = content.replace("```json", "")
-          content = content.replace("```", "")
-          content = content.strip()
+        if not content:
+            return []
 
-          return json.loads(content)
+        try:
+            content = content.replace("```json", "")
+            content = content.replace("```", "")
+            content = content.strip()
 
-      except Exception as e:
-          logger.error(f"Failed to parse AI response: {e}")
-          logger.error(f"AI response content: {content}")
+            return json.loads(content)
 
-          return []
+        except Exception as e:
+            logger.error(f"Failed to parse AI response: {e}")
+            logger.error(f"AI response content: {content}")
+
+            return []
+        
+      except (APIError, APIConnectionError) as e:
+        logger.error(f"AI API error: {e}")
+        continue
       
-    except (APIError, APIConnectionError) as e:
-      logger.error(f"AI API error: {e}")
-      return []
+    return []
   

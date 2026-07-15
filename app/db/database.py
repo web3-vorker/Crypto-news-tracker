@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
 )
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 from app.models.news import News
 from app.models.strong_news import StrongNews
@@ -112,3 +113,4 @@ async def get_strong_news() -> list[StrongNews]:
       except Exception as e:
         logger.error(f"get_strong_news error: {e}")
         raise
+
