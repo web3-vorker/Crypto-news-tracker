@@ -795,6 +795,18 @@
 
   <div class="layout">
     <div class="sidebar">
+      <div class="filter-group analytics-group">
+        <h3>Настрой рынка</h3>
+        <div class="analytics-card" id="analytics-card">
+          <div class="mood-badge mood-neutral" id="mood-badge">Загрузка...</div>
+          <div class="analytics-row"><span>Период</span><span id="analytics-window">24 ч</span></div>
+          <div class="analytics-row"><span>Bullish</span><span id="analytics-bullish-count">0</span></div>
+          <div class="analytics-row"><span>Bearish</span><span id="analytics-bearish-count">0</span></div>
+          <div class="analytics-row"><span>Neutral</span><span id="analytics-neutral-count">0</span></div>
+          <div class="analytics-row"><span>Индекс</span><span id="analytics-mood-index">0.000</span></div>
+        </div>
+      </div>
+
       <div class="filter-group">
         <h3>Sentiment</h3>
         <div class="filter-row active" data-filter="sentiment" data-value="">
@@ -826,18 +838,6 @@
       <div class="filter-group">
         <h3>Category</h3>
         <div id="category-list"><!-- заполняется JS --></div>
-      </div>
-
-      <div class="filter-group analytics-group">
-        <h3>Настрой рынка</h3>
-        <div class="analytics-card" id="analytics-card">
-          <div class="mood-badge mood-neutral" id="mood-badge">Загрузка...</div>
-          <div class="analytics-row"><span>Период</span><span id="analytics-window">24 ч</span></div>
-          <div class="analytics-row"><span>Bullish</span><span id="analytics-bullish-count">0</span></div>
-          <div class="analytics-row"><span>Bearish</span><span id="analytics-bearish-count">0</span></div>
-          <div class="analytics-row"><span>Neutral</span><span id="analytics-neutral-count">0</span></div>
-          <div class="analytics-row"><span>Индекс</span><span id="analytics-mood-index">0.000</span></div>
-        </div>
       </div>
 
       <div class="stat-block" id="stat-block">
