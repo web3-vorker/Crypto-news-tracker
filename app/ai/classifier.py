@@ -1,19 +1,19 @@
 from openai import AsyncOpenAI, APIError, APIConnectionError
 import json
 
-from app.config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENROUTER_MODELS
+from app.config import GROQ_API_KEY, GROQ_BASE_URL, GROQ_MODELS
 from utils.logger import logger
 
 class AI:
   """
-  Модуль для классификации крипто-новостей с использованием OpenRouter API (OpenAI)
+  Модуль для классификации крипто-новостей с использованием GROQ API (OpenAI)
   """
   def __init__(self,):
     self.client = AsyncOpenAI(
-      base_url=OPENROUTER_BASE_URL,
-      api_key=OPENROUTER_API_KEY,
+      base_url=GROQ_BASE_URL,
+      api_key=GROQ_API_KEY,
     )
-    self.models = OPENROUTER_MODELS
+    self.models = GROQ_MODELS
     
 
   async def classify(self, batch: list[dict]) -> list[dict]:
@@ -140,7 +140,7 @@ class AI:
         logger.error(f"AI API error: {e}")
         if "This model is unavailable" in str(e):
             logger.error(f"Model {model} is unavailable. Removing from list.")
-            OPENROUTER_MODELS.remove(model)
+            GROQ_MODELS.remove(model)
 
         continue
       

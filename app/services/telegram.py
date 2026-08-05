@@ -14,12 +14,12 @@ from aiogram.enums import ParseMode
 load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-ALLOWED_USERS = list(
-    map(
-        int,
-        os.getenv("ALLOWED_USERS").split(",")
-    )
-)
+allowed_users_raw = os.getenv("ALLOWED_USERS", "")
+ALLOWED_USERS = [
+    int(user_id)
+    for user_id in allowed_users_raw.split(",")
+    if user_id.strip()
+]
 
 
 logging.basicConfig(

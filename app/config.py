@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("GROQ_API_KEY", "")
-OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://api.groq.com/openai/v1")
-OPENROUTER_MODELS = [model.strip() for model in os.getenv("GROQ_MODELS", "").split(",") if model.strip()]
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+GROQ_MODELS = [model.strip() for model in os.getenv("GROQ_MODELS", "").split(",") if model.strip()]
 
 COINGECKO_URL = os.getenv("COINGECKO_URL", "https://api.coingecko.com/api/v3/coins/markets")
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")

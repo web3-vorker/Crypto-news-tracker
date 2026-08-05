@@ -52,5 +52,5 @@ class StrongNews(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.now(),
+        default=datetime.now,
     )

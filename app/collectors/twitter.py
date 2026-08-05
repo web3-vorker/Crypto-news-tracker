@@ -10,7 +10,7 @@ from utils.logger import logger
 class TwitterCollector(BaseCollector):
     
     async def fetch_rss(self, session, account):
-        for instance in NITTER_INSTANCES:
+        for instance in TWITTER_INSTANCES:
             try:
                 url = f"{instance}/{account}/rss"
                 async with session.get(url, timeout=8, allow_redirects=True) as response:
@@ -29,7 +29,7 @@ class TwitterCollector(BaseCollector):
         }
 
         async with aiohttp.ClientSession(headers=headers) as session:
-            for account in ACCOUNTS:
+            for account in TWITTER_ACCOUNTS:
                 try:
                     rss_text = await self.fetch_rss(session, account)
 
