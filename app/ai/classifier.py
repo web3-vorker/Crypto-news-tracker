@@ -1,16 +1,8 @@
 from openai import AsyncOpenAI, APIError, APIConnectionError
-from dotenv import load_dotenv
-import os
 import json
 
+from app.config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENROUTER_MODELS
 from utils.logger import logger
-
-load_dotenv()
-
-OPENROUTER_API_KEY = os.getenv("GROQ_API_KEY", "")
-
-models_str = os.getenv("GROQ_MODELS", "")
-OPENROUTER_MODELS = [model.strip() for model in models_str.split(",") if model.strip()]
 
 class AI:
   """
@@ -18,7 +10,7 @@ class AI:
   """
   def __init__(self,):
     self.client = AsyncOpenAI(
-      base_url="https://api.groq.com/openai/v1",
+      base_url=OPENROUTER_BASE_URL,
       api_key=OPENROUTER_API_KEY,
     )
     self.models = OPENROUTER_MODELS

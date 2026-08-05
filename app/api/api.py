@@ -73,7 +73,7 @@ async def get_news(
 
 @app.get("/analytics")
 async def get_analytics(
-    hours: int = Query(24, ge=1, le=168),
+    hours: int = Query(72, ge=1, le=168),
     min_score: int = Query(0, ge=0, le=100),
     sentiment: str | None = Query(None, description="bullish|bearish|neutral"),
     category: str | None = Query(None),
@@ -96,18 +96,16 @@ async def get_analytics(
 # Получить бесплатный ключ: https://www.coingecko.com/en/api/pricing -> Demo
 # ---------------------------------------------------------------------------
 
-COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
-COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")
-COINS = ["bitcoin", "ethereum", "dogecoin"]
+from app.config import COINGECKO_API_KEY, COINGECKO_URL, COINGECKO_COINS, COINGECKO_CACHE_TTL
 
 _price_cache: dict = {"data": None, "ts": 0}
-CACHE_TTL_SECONDS = 60
+CACHE_TTL_SECONDS = COINGECKO_CACHE_TTL
 
 
 async def _fetch_prices_from_coingecko() -> list[dict]:
     params = {
         "vs_currency": "usd",
-        "ids": ",".join(COINS),
+        "ids": ",".join(COINGECKO_COINS),
         "order": "market_cap_desc",
         "sparkline": "true",
         "price_change_percentage": "24h",

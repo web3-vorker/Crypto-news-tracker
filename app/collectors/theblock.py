@@ -4,9 +4,7 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
-
-
-THEBLOCK_RSS = "https://www.theblock.co/rss.xml"
+from app.config import THEBLOCK_RSS
 
 
 class TheBlockCollector(BaseCollector):

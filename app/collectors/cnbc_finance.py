@@ -4,11 +4,12 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
+from app.config import CNBC_FINANCE_RSS
 
 
 class CNBCFinanceCollector(BaseCollector):
 
-    RSS_URL = "https://www.cnbc.com/id/100003114/device/rss/rss.html"
+    RSS_URL = CNBC_FINANCE_RSS
 
     async def fetch(self):
 

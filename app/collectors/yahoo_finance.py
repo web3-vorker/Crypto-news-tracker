@@ -4,11 +4,12 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
+from app.config import YAHOO_FINANCE_RSS
 
 
 class YahooFinanceCollector(BaseCollector):
 
-    RSS_URL = "https://finance.yahoo.com/news/rssindex"
+    RSS_URL = YAHOO_FINANCE_RSS
 
     async def fetch(self):
 

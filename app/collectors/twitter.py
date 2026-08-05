@@ -2,43 +2,9 @@ import aiohttp
 import feedparser
 from bs4 import BeautifulSoup
 from app.collectors.base import BaseCollector
+from app.config import TWITTER_ACCOUNTS, TWITTER_INSTANCES
 
 from utils.logger import logger
-
-
-NITTER_INSTANCES = [
-    "https://rss.xcancel.com",
-    "https://nitter.net",
-    "https://nitter.catsarch.com",
-    "https://nitter.tiekoetter.com",
-    "https://nitter.kareem.one",
-    "https://nitter.42l.fr",
-    "https://nitter.space",
-    "https://lightbrd.com",
-    "https://nitter.privacyredirect.com",
-    "https://nuku.trabun.org",
-    "https://nitter.privacyredirect.com",
-    "https://nitter.net",
-    "https://nitter.poast.org",
-]
-
-ACCOUNTS = [
-    "Reuters",
-    "AP",
-    "BBCBreaking",
-    "AJEnglish",
-    "FedReserve",
-    "@SecScottBessent",
-    "WSJmarkets",
-    "markets",
-    "OSINTdefender",
-    "WarMonitor3",
-    "LizAnnSonders",
-    "RaoulGMI",
-    "zerohedge",
-    "realDonaldTrump",
-    "POTUS",
-]
 
 
 class TwitterCollector(BaseCollector):

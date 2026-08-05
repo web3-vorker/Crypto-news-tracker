@@ -4,11 +4,12 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
+from app.config import SEC_RSS
 
 
 class SECCollector(BaseCollector):
 
-    RSS_URL = "https://www.sec.gov/rss/pressrelease.xml"
+    RSS_URL = SEC_RSS
 
     async def fetch(self):
 

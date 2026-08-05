@@ -4,9 +4,7 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
-
-
-COINTELEGRAPH_RSS = "https://cointelegraph.com/rss"
+from app.config import COINTELEGRAPH_RSS
 
 
 class CointelegraphCollector(BaseCollector):

@@ -1069,7 +1069,7 @@
 
     async function loadAnalytics() {
       try {
-        const res = await fetch(`${API_BASE}/analytics?hours=24`);
+        const res = await fetch(`${API_BASE}/analytics`);
         const analytics = await res.json();
         renderAnalytics(analytics);
         setApiStatus(true);

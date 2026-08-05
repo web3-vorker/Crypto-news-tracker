@@ -4,9 +4,7 @@ import feedparser
 from bs4 import BeautifulSoup
 
 from app.collectors.base import BaseCollector
-
-
-COINDESK_RSS = "https://www.coindesk.com/arc/outboundfeeds/rss/"
+from app.config import COINDESK_RSS
 
 
 class CoinDeskCollector(BaseCollector):
