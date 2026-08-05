@@ -7,15 +7,18 @@ from utils.logger import logger
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-models_str = os.getenv("OPENROUTER_MODELS", "")
+models_str = os.getenv("GROQ_MODELS", "")
 OPENROUTER_MODELS = [model.strip() for model in models_str.split(",") if model.strip()]
 
 class AI:
+  """
+  Модуль для классификации крипто-новостей с использованием OpenRouter API (OpenAI)
+  """
   def __init__(self,):
     self.client = AsyncOpenAI(
-      base_url="https://openrouter.ai/api/v1",
+      base_url="https://api.groq.com/openai/v1",
       api_key=OPENROUTER_API_KEY,
     )
     self.models = OPENROUTER_MODELS
@@ -143,6 +146,10 @@ class AI:
         
       except (APIError, APIConnectionError) as e:
         logger.error(f"AI API error: {e}")
+        if "This model is unavailable" in str(e):
+            logger.error(f"Model {model} is unavailable. Removing from list.")
+            OPENROUTER_MODELS.remove(model)
+
         continue
       
     return []

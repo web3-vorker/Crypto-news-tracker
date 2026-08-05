@@ -7,7 +7,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.db.database import get_strong_news, engine
+from app.db.database import get_strong_news, get_strong_news_stats, engine
 from app.models.base import Base
 from utils.logger import logger
 
@@ -71,10 +71,26 @@ async def get_news(
     return result
 
 
+@app.get("/analytics")
+async def get_analytics(
+    hours: int = Query(24, ge=1, le=168),
+    min_score: int = Query(0, ge=0, le=100),
+    sentiment: str | None = Query(None, description="bullish|bearish|neutral"),
+    category: str | None = Query(None),
+) -> dict:
+    analytics = await get_strong_news_stats(
+        hours=hours,
+        min_score=min_score,
+        sentiment=sentiment,
+        category=category,
+    )
+    return analytics
+
+
 # ---------------------------------------------------------------------------
 # Цены крипты (CoinGecko Demo API) с in-memory кэшем.
 # Binance отдаёт 451 (geo-block) из дата-центра Render, поэтому используем
-# CoinGecko с персональным Demo API-ключом — у него отдельный от чужого
+# CoinGecko с персональным Demo API-ключом — у нас отдельный от чужого
 # трафика лимит (30 запросов/мин), не зависящий от шаринга IP на Render.
 #
 # Получить бесплатный ключ: https://www.coingecko.com/en/api/pricing -> Demo

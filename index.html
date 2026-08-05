@@ -265,6 +265,51 @@
       color: var(--text-mid);
     }
 
+    .analytics-card {
+      padding: 12px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-panel-2);
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .analytics-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .mood-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+
+    .mood-bullish {
+      background: rgba(61, 255, 138, 0.14);
+      color: var(--green);
+    }
+
+    .mood-bearish {
+      background: rgba(255, 92, 92, 0.14);
+      color: var(--red);
+    }
+
+    .mood-neutral {
+      background: rgba(255, 184, 77, 0.14);
+      color: var(--amber);
+    }
+
     /* ---------- FEED ---------- */
     .feed {
       padding: 14px 18px;
@@ -783,6 +828,18 @@
         <div id="category-list"><!-- заполняется JS --></div>
       </div>
 
+      <div class="filter-group analytics-group">
+        <h3>Настрой рынка</h3>
+        <div class="analytics-card" id="analytics-card">
+          <div class="mood-badge mood-neutral" id="mood-badge">Загрузка...</div>
+          <div class="analytics-row"><span>Период</span><span id="analytics-window">24 ч</span></div>
+          <div class="analytics-row"><span>Bullish</span><span id="analytics-bullish-count">0</span></div>
+          <div class="analytics-row"><span>Bearish</span><span id="analytics-bearish-count">0</span></div>
+          <div class="analytics-row"><span>Neutral</span><span id="analytics-neutral-count">0</span></div>
+          <div class="analytics-row"><span>Индекс</span><span id="analytics-mood-index">0.000</span></div>
+        </div>
+      </div>
+
       <div class="stat-block" id="stat-block">
         <div><b>Источников:</b> —</div>
         <div><b>Обновление:</b> 30s</div>
@@ -1010,6 +1067,33 @@
       });
     }
 
+    async function loadAnalytics() {
+      try {
+        const res = await fetch(`${API_BASE}/analytics?hours=24`);
+        const analytics = await res.json();
+        renderAnalytics(analytics);
+        setApiStatus(true);
+      } catch (e) {
+        console.error('analytics error', e);
+      }
+    }
+
+    function renderAnalytics(data) {
+      if (!data) return;
+
+      const moodBadge = document.getElementById('mood-badge');
+      const mood = data.mood || 'neutral';
+      const moodText = mood === 'bullish' ? 'Рост' : mood === 'bearish' ? 'Падение' : 'Нейтрально';
+      moodBadge.textContent = moodText;
+      moodBadge.className = `mood-badge mood-${mood}`;
+
+      document.getElementById('analytics-window').textContent = `${data.hours} ч`;
+      document.getElementById('analytics-bullish-count').textContent = data.counts.bullish;
+      document.getElementById('analytics-bearish-count').textContent = data.counts.bearish;
+      document.getElementById('analytics-neutral-count').textContent = data.counts.neutral;
+      document.getElementById('analytics-mood-index').textContent = data.mood_index.toFixed(3);
+    }
+
     // кэш уже запрошенных превью на фронте, чтобы не дёргать /preview повторно
     const previewCache = {};
 
@@ -1116,8 +1200,12 @@
     // ---------- Запуск ----------
     loadPrices();
     loadNews();
+    loadAnalytics();
     setInterval(loadPrices, PRICES_REFRESH_MS);
-    setInterval(loadNews, REFRESH_MS);
+    setInterval(() => {
+      loadNews();
+      loadAnalytics();
+    }, REFRESH_MS);
   </script>
 
 </body>
